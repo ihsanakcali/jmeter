@@ -3,10 +3,10 @@ FROM redhat/ubi9 as builder
 
 # Install Java, nginx and tar in the builder container using the correct package name
 RUN mkdir /tmp/packages && \
-    dnf install -y java-17-openjdk-headless tar nginx -y --installroot=/tmp/packages --releasever=/
+    dnf install -y java-17-openjdk-headless tar curl nginx -y --installroot=/tmp/packages --releasever=/
 
 # Define the JMeter version
-ARG JMETER_VERSION=5.6.2
+ARG JMETER_VERSION=5.6.3
 
 # Create a directory for JMeter installation
 RUN mkdir -p /usr/local/apache-jmeter-${JMETER_VERSION}
@@ -20,7 +20,7 @@ RUN curl -L -o /tmp/jmeter.tgz https://dlcdn.apache.org/jmeter/binaries/apache-j
 FROM redhat/ubi9-micro
 
 # Define the JMeter version in the second stage
-ARG JMETER_VERSION
+ARG JMETER_VERSION=5.6.3
 
 # Copy Java, nginx and tar installation from the builder container to the main container
 COPY --from=builder /tmp/packages /
