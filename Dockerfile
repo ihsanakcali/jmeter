@@ -11,7 +11,7 @@ RUN mkdir /tmp/packages && \
 ARG JMETER_VERSION=5.6.3
 
 # Create install dir
-RUN mkdir -p /usr/local/apache-jmeter-${JMETER_VERSION}
+#RUN mkdir -p /usr/local/apache-jmeter-${JMETER_VERSION}
 
 # Download and extract JMeter
 RUN curl -L -o /tmp/jmeter.tgz https://dlcdn.apache.org/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz && \
@@ -21,21 +21,24 @@ RUN curl -L -o /tmp/jmeter.tgz https://dlcdn.apache.org/jmeter/binaries/apache-j
 # Download and extract JMeter plugins
 WORKDIR /tmp/plugins
 
+
 # Download plugin ZIPs
 RUN curl -LO https://jmeter-plugins.org/files/packages/jpgc-casutg-3.1.1.zip && \
     curl -LO https://jmeter-plugins.org/files/packages/jpgc-jmxmon-0.3.zip && \
     curl -LO https://jmeter-plugins.org/files/packages/jpgc-csvars-0.2.zip
 
 # Extract each plugin and copy jars to appropriate JMeter folders
-RUN mkdir -p /usr/local/apache-jmeter-${JMETER_VERSION}/lib/ext /usr/local/apache-jmeter-${JMETER_VERSION}/lib && \
+RUN mkdir -p /tmp/lib/ext /tmp/lib && \
     mkdir -p /tmp/plugins/extracted && cd /tmp/plugins && \
     for zip in *.zip; do \
         dirname=$(basename "$zip" .zip); \
         unzip -q "$zip" -d "extracted/$dirname"; \
     done && \
-    find extracted -type f -path '*/lib/*.jar' -exec cp -v {} /usr/local/apache-jmeter-${JMETER_VERSION}/lib/ \; && \
-    find extracted -type f -path '*/lib/ext/*.jar' -exec cp -v {} /usr/local/apache-jmeter-${JMETER_VERSION}/lib/ext/ \; && \
+    find extracted -type f -path '*/lib/*.jar' -exec cp -v {} /tmp/lib/ \; && \
+    find extracted -type f -path '*/lib/ext/*.jar' -exec cp -v {} /tmp/lib/ext/ \; && \
     rm -rf /tmp/plugins
+
+RUN curl -Lo /tmp/lib/nimbus-jose-jwt-10.3.jar https://repo1.maven.org/maven2/com/nimbusds/nimbus-jose-jwt/10.3/nimbus-jose-jwt-10.3.jar
 
 
 # Stage 2: Final Container
@@ -46,6 +49,7 @@ ARG JMETER_VERSION=5.6.3
 
 # Copy Java, nginx and tar installation from the builder container to the main container
 COPY --from=builder /tmp/packages /
+COPY --from=builder /tmp/lib /usr/local/apache-jmeter-${JMETER_VERSION}/lib
 COPY --from=builder /usr/local /usr/local/apache-jmeter-${JMETER_VERSION}
 
 # Update nginx.conf
